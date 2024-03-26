@@ -1,30 +1,26 @@
 (ns c-loja.core
-  (:require [c-loja.db :as l.db]))
+  (:require [c-loja.db :as l.db]
+            [c-loja.logic :as l.logic]))
 
-(defn total-do-item
-  [[_ detalhes]]
-  (* (get detalhes :quantidade 0) (get detalhes :preco-unitario 0)))
-
-(defn total-do-pedido
-  [pedido]
-  (->> pedido
-       (map total-do-item)
-       (reduce +)))
-
-(defn total-dos-pedidos
+(defn resumo-por-usuario-ordenado
   [pedidos]
   (->> pedidos
-       (map :itens)
-       (map total-do-pedido)
-       (reduce +)))
+       l.logic/resumo-por-usuario
+       (sort-by :preco-total)
+       reverse))
 
-(defn quantidade-de-pedidos-e-gasto-total-por-usuario
-  [[usuario, pedidos]]
-  {:usuario-id       usuario
-   :total-de-pedidos (count pedidos)
-   :preco-total      (total-dos-pedidos pedidos)})
+(defn top-2
+  [resumo]
+  (take 2 resumo))
 
-(->> (l.db/todos-os-pedidos)
-     (group-by :usuario)
-     (map quantidade-de-pedidos-e-gasto-total-por-usuario)
-     println)
+(let [pedidos (l.db/todos-os-pedidos)
+      resumo (resumo-por-usuario-ordenado pedidos)]
+  (println resumo)
+  (println (first resumo))
+  (println (second resumo))
+  (println (rest resumo))
+  (println (count resumo))
+  (println (class resumo))
+  (println (nth resumo 1))
+  (println (take 2 resumo))
+  (println (top-2 resumo)))
